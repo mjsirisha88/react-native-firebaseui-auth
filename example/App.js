@@ -7,7 +7,7 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import type {Node} from 'react';
 import {
   SafeAreaView,
@@ -28,7 +28,7 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-import Auth from 'react-native-firebaseui-auth';
+import Auth, {AuthEventEmitter, AuthEvents} from 'react-native-firebaseui-auth';
 
 const Section = ({children, title}): Node => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -57,6 +57,16 @@ const Section = ({children, title}): Node => {
 };
 
 const App: () => Node = () => {
+  useEffect(() => {
+    const authEventListener = AuthEventEmitter.addListener(
+      AuthEvents.AUTH_STATE_CHANGED,
+      event => {
+        console.log('AuthEventListener -user:', event.user);
+      },
+    );
+    return () => authEventListener.remove();
+  }, []);
+
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -91,22 +101,26 @@ const App: () => Node = () => {
                   privacyPolicyUrl: 'https://example.com/privacypolicy.htm',
                 };
                 Auth.signIn(config)
-                  .then(user => console.log(user))
-                  .catch(err => console.log(err));
+                  .then(user => console.log('SignIn -user:', user))
+                  .catch(err => console.log('SignIn -error:', err));
               }}
               title="SignIn"
             />
             <Text> / </Text>
             <Button
               onPress={() => {
-                Auth.getCurrentUser().then(user => console.log(user));
+                Auth.getCurrentUser().then(user =>
+                  console.log('CurrentUser -user:', user),
+                );
               }}
               title="CurrentUser"
             />
             <Text> / </Text>
             <Button
               onPress={() => {
-                Auth.signOut().then(res => console.log(res));
+                Auth.signOut().then(res =>
+                  console.log('SignOut -response:', res),
+                );
               }}
               title="SignOut"
             />
@@ -121,7 +135,9 @@ const App: () => Node = () => {
             }}>
             <Button
               onPress={() => {
-                Auth.delete().then(res => console.log(res));
+                Auth.deleteUser().then(res =>
+                  console.log('Delete -response:', res),
+                );
               }}
               title="Delete"
             />
